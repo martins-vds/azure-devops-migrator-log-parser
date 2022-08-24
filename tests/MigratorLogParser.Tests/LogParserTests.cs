@@ -1,6 +1,8 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestPlatform.Common.Exceptions;
+using MigratorLogParser.Issues;
+using MigratorLogParser.Parsers.DataMigrationTool;
 using System.IO.Abstractions.TestingHelpers;
 using System.Text;
 
@@ -9,7 +11,7 @@ namespace MigratorLogParser.Tests
     public class LogParserTests
     {
         [Fact]
-        public void It_Parses_Custom_Link_Issues()
+        public void It_Parses_TF402583()
         {
             // Arrange
             var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
@@ -17,20 +19,27 @@ namespace MigratorLogParser.Tests
                 { @"c:\file.log", new MockFileData(BuildLogsWithCustomLinkIssues()) }
             });
 
-            var parser = new LogParser(fileSystem, new LoggerFactory().CreateLogger<LogParser>());
+            var parser = new DataMigrationToolLogParser(fileSystem, new LoggerFactory().CreateLogger<DataMigrationToolLogParser>());
 
-            var issues = parser.ParseProcessValidationIssues(@"c:\file.log");
+            var issues = parser.Parse(@"c:\file.log");
 
-            issues.Should().BeEquivalentTo(new List<ProcessValidationIssue>()
+            issues.Should().BeEquivalentTo(new List<ProcessValidation>()
             {
-                new CustomLinkIssue(){ ProjectName = "ADMS-P-SGPA-P", File = "WorkItem Tracking\\LinkTypes\\Scrum.ImpededBy.xml", LineNumber = 2, Description = "TF402583: Custom link type Scrum.ImpededBy is invalid because custom link types aren't supported.", CustomLink = "Scrum.ImpededBy", IssueRef = "TF402583", Remediation = string.Empty },
-                new CustomLinkIssue(){ ProjectName = "ADMS-P-SGPA-P", File = "WorkItem Tracking\\LinkTypes\\Scrum.ImplementedBy.xml", LineNumber = 2, Description = "TF402583: Custom link type Scrum.ImplementedBy is invalid because custom link types aren't supported.", CustomLink = "Scrum.ImplementedBy", IssueRef = "TF402583", Remediation = string.Empty },
-                new CustomLinkIssue(){ ProjectName = "ADMS-P-SGPA-P", File = "WorkItem Tracking\\LinkTypes\\Scrum.FailedBy.xml", LineNumber = 2, Description = "TF402583: Custom link type Scrum.FailedBy is invalid because custom link types aren't supported.", CustomLink = "Scrum.FailedBy", IssueRef = "TF402583", Remediation = string.Empty }
+                new ProcessValidation()
+                {
+                    ProjectName = "ADMS-P-SGPA-P",
+                    Issues = new List<ProcessValidationIssue>()
+                    {
+                        new TF402583(){ File = "WorkItem Tracking\\LinkTypes\\Scrum.ImpededBy.xml", LineNumber = 2, Description = "TF402583: Custom link type Scrum.ImpededBy is invalid because custom link types aren't supported.", CustomLink = "Scrum.ImpededBy", IssueRef = "TF402583" },
+                        new TF402583(){ File = "WorkItem Tracking\\LinkTypes\\Scrum.ImplementedBy.xml", LineNumber = 2, Description = "TF402583: Custom link type Scrum.ImplementedBy is invalid because custom link types aren't supported.", CustomLink = "Scrum.ImplementedBy", IssueRef = "TF402583" },
+                        new TF402583(){ File = "WorkItem Tracking\\LinkTypes\\Scrum.FailedBy.xml", LineNumber = 2, Description = "TF402583: Custom link type Scrum.FailedBy is invalid because custom link types aren't supported.", CustomLink = "Scrum.FailedBy", IssueRef = "TF402583" }
+                    }
+                }
             });
         }
 
         [Fact]
-        public void It_Parses_Missing_Allowed_Values_Issues()
+        public void It_Parses_TF402544()
         {
             // Arrange
             var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
@@ -38,18 +47,25 @@ namespace MigratorLogParser.Tests
                 { @"c:\file.log", new MockFileData(BuildLogsWithMissingAllowedValuesIssues()) }
             });
 
-            var parser = new LogParser(fileSystem, new LoggerFactory().CreateLogger<LogParser>());
+            var parser = new DataMigrationToolLogParser(fileSystem, new LoggerFactory().CreateLogger<DataMigrationToolLogParser>());
 
-            var issues = parser.ParseProcessValidationIssues(@"c:\file.log");
+            var issues = parser.Parse(@"c:\file.log");
 
-            issues.Should().BeEquivalentTo(new List<ProcessValidationIssue>()
+            issues.Should().BeEquivalentTo(new List<ProcessValidation>()
             {
-                new MissingAllowedValuesIssue(){ ProjectName = "ADMS-P-SGPA-P", File = "WorkItem Tracking\\TypeDefinitions\\FeedbackRequestDemandederetour.xml", LineNumber = 75, Remediation = string.Empty, RefName = "Microsoft.VSTS.Feedback.ApplicationType", WitName = "Feedback Request-Demande de retour", ElementName = "FeedbackRequestWorkItems", Description = "TF402544: Field Microsoft.VSTS.Feedback.ApplicationType, defined in work item type Feedback Request-Demande de retour, requires an ALLOWEDVALUES rule that contains values to support element FeedbackRequestWorkItems specified in ProcessConfiguration.", IssueRef = "TF402544" },
+                new ProcessValidation()
+                {
+                    ProjectName = "ADMS-P-SGPA-P",
+                    Issues = new List<ProcessValidationIssue>()
+                    {
+                        new TF402544(){ File = "WorkItem Tracking\\TypeDefinitions\\FeedbackRequestDemandederetour.xml", LineNumber = 75, RefName = "Microsoft.VSTS.Feedback.ApplicationType", WitName = "Feedback Request-Demande de retour", ElementName = "FeedbackRequestWorkItems", Description = "TF402544: Field Microsoft.VSTS.Feedback.ApplicationType, defined in work item type Feedback Request-Demande de retour, requires an ALLOWEDVALUES rule that contains values to support element FeedbackRequestWorkItems specified in ProcessConfiguration.", IssueRef = "TF402544" },
+                    }
+                }
             });
         }
 
         [Fact]
-        public void It_Parses_Missing_State_Transition_Issues()
+        public void It_Parses_TF402551()
         {
             // Arrange
             var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
@@ -57,14 +73,22 @@ namespace MigratorLogParser.Tests
                 { @"c:\file.log", new MockFileData(BuildLogsWithMissingStateAndTransitionIssues()) }
             });
 
-            var parser = new LogParser(fileSystem, new LoggerFactory().CreateLogger<LogParser>());
+            var parser = new DataMigrationToolLogParser(fileSystem, new LoggerFactory().CreateLogger<DataMigrationToolLogParser>());
 
-            var issues = parser.ParseProcessValidationIssues(@"c:\file.log");
+            var issues = parser.Parse(@"c:\file.log");
 
-            issues.Should().BeEquivalentTo(new List<ProcessValidationIssue>()
+            issues.Should().BeEquivalentTo(new List<ProcessValidation>()
             {
-                new MissingStateAndTransitionIssue(){ ProjectName = "ADMS-P-SGPA-P", File = "WorkItem Tracking\\TypeDefinitions\\CodeReviewRequestDemandedervisiondecode.xml", LineNumber = -1, Remediation = string.Empty, WitName = "Code Review Request-Demande de révision de code", ElementName = "Microsoft.CodeReviewRequestCategory", Description = "TF402551: Work item type Code Review Request-Demande de révision de code doesn't define workflow state Requested, which is required because ProcessConfiguration maps it to a metastate for element Microsoft.CodeReviewRequestCategory.", IssueRef = "TF402551" },
-                new MissingStateAndTransitionIssue(){ ProjectName = "ADMS-P-SGPA-P", File = "WorkItem Tracking\\TypeDefinitions\\CodeReviewResponseRponservisiondecode.xml", LineNumber = -1, Remediation = string.Empty, WitName = "Code Review Response-Réponse à révision de code", ElementName = "Microsoft.CodeReviewResponseCategory", Description = "TF402551: Work item type Code Review Response-Réponse à révision de code doesn't define workflow state Requested, which is required because ProcessConfiguration maps it to a metastate for element Microsoft.CodeReviewResponseCategory.", IssueRef = "TF402551" },
+                new ProcessValidation()
+                {
+                    ProjectName = "ADMS-P-SGPA-P",
+                    Issues = new List<ProcessValidationIssue>()
+                    {
+                        new TF402551(){ File = "WorkItem Tracking\\TypeDefinitions\\CodeReviewRequestDemandedervisiondecode.xml", LineNumber = -1, WitName = "Code Review Request-Demande de révision de code", ElementName = "Microsoft.CodeReviewRequestCategory", Description = "TF402551: Work item type Code Review Request-Demande de révision de code doesn't define workflow state Requested, which is required because ProcessConfiguration maps it to a metastate for element Microsoft.CodeReviewRequestCategory.", IssueRef = "TF402551" },
+                        new TF402551(){ File = "WorkItem Tracking\\TypeDefinitions\\CodeReviewResponseRponservisiondecode.xml", LineNumber = -1, WitName = "Code Review Response-Réponse à révision de code", ElementName = "Microsoft.CodeReviewResponseCategory", Description = "TF402551: Work item type Code Review Response-Réponse à révision de code doesn't define workflow state Requested, which is required because ProcessConfiguration maps it to a metastate for element Microsoft.CodeReviewResponseCategory.", IssueRef = "TF402551" },
+                    }
+                }
+
             });
         }
 

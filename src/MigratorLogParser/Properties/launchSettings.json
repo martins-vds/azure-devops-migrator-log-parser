@@ -2,7 +2,7 @@
   "profiles": {
     "MigratorLogParser": {
       "commandName": "Project",
-      "commandLineArgs": "data-migration -f \"C:\\Users\\vinima\\OneDrive - Microsoft\\Documents\\Customers\\Tuan\\ESDC\\Onboarding Azure DevOps\\20220822_131424\\20220822_131424\\DataMigrationTool.log\" -o c:\\temp\\"
+      "commandLineArgs": "data-migration-tool -f \"C:\\Users\\vinima\\OneDrive - Microsoft\\Documents\\Customers\\Tuan\\ESDC\\Onboarding Azure DevOps\\20220822_131424\\20220822_131424\\DataMigrationTool.log\" -o c:\\temp\\"
     }
   }
 }

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using MigratorLogParser.Issues;
 using System.IO.Abstractions;
 using System.Text.RegularExpressions;
 
@@ -6,16 +7,29 @@ namespace MigratorLogParser.Parsers.DataMigrationTool
 {
     public class DataMigrationToolLogParser
     {
-        private const string StartOfIssuesPattern = @"\[Info\] Step : ProcessValidation INFO - Starting validation of project \d+=(?<projectName>[^,]+),";
-        private const string EndOfIssuesPattern = @"\[Info\] Step : ProcessValidation INFO - Validation failed for project {0} with (?<numberOfIssues>\d+) errors";
-        private const string ProcessValidationFailurePattern = @"\[Error\] Step : ProcessValidation - Failure Type - Validation failed : Invalid process template: (?<file>[^:]+):(?<lineNumber>\d*)";
-        private const string CustomLinkPattern = @"(?<description>(?<issueRef>TF\d+): Custom link type (?<customLink>\S+) is invalid because custom link types aren't supported\.)";
-        private const string MissingAllowedValuesPattern = @"(?<description>(?<issueRef>TF\d+): Field (?<refName>.*(?=,\s+defined)), defined in work item type (?<witName>[^,]*), requires an ALLOWEDVALUES rule that contains values to support element (?<elementName>\S*) specified in ProcessConfiguration\.)";
-        private const string MissingStateAndTransitionPattern = @"(?<description>(?<issueRef>TF\d+): Work item type (?<witName>.*(?=\s*doesn't)) doesn't define workflow state (?<stateName>[^,]+), which is required because ProcessConfiguration maps it to a metastate for element (?<elementName>.*(?=\.$))\.)";
-        private const string BugsMissingStatesPattern = @"(?<description>The following element contains an error: (?<elementName>.*(?=\.\s+TF)). TF400506: This element defines the states for work items that represent Bugs or Defects. Each state must exist in at least one of the work item types that are defined in: BugWorkItems. The following states do not exist in any of the work item types: (?<missingStates>.*)\.)";
-
         private readonly IFileSystem _fileSystem;
         private readonly ILogger _logger;
+
+        private readonly ProcessValidationSectionParser processValidationSectionParser = new ProcessValidationSectionParser();
+        private readonly IEnumerable<ProcessValidationIssueParser> _issueParsers = new List<ProcessValidationIssueParser>()
+        {
+            new TF402583Parser(),
+            new TF402544Parser(),
+            new TF402551Parser(),
+            new TF400506Parser(),
+            new TF400507Parser(),
+            new TF400508Parser(),
+            new TF400526Parser(),
+            new TF401107Parser(),
+            new TF402538Parser(),
+            new TF402539Parser(),
+            new TF402574Parser(),
+            new TF402580Parser(),
+            new TF402581Parser(),
+            new TF402584Parser(),
+            new TF402594Parser(),
+            new TF402596Parser()
+        };
 
         public DataMigrationToolLogParser(IFileSystem fileSystem, ILogger<DataMigrationToolLogParser> logger)
         {
@@ -23,105 +37,56 @@ namespace MigratorLogParser.Parsers.DataMigrationTool
             _logger = logger;
         }
 
-        public IEnumerable<ProcessValidationIssue> ParseProcessValidationIssues(string log)
+        public IEnumerable<ProcessValidation> Parse(string logFile)
         {
-            var entries = _fileSystem.File.ReadLines(log);
-            var issues = new List<ProcessValidationIssue>();
+            var entries = _fileSystem.File.ReadLines(logFile);
+            var issues = new List<ProcessValidation>();
+            ProcessValidation projectValidation = default;
 
             var issuesFound = false;
-            var projectName = string.Empty;
-            var issuesParsed = 0;
+            IDisposable? loginScope = default;
 
             foreach (var entry in entries)
             {
-
-                if (issuesFound is false && Regex.IsMatch(entry, StartOfIssuesPattern))
+                if (issuesFound is false && processValidationSectionParser.TryParse(entry, out projectValidation))
                 {
-                    var match = Regex.Match(entry, StartOfIssuesPattern);
-                    projectName = match.Groups["projectName"].Value;
+                    issues.Add(projectValidation);
                     issuesFound = true;
+                    loginScope = _logger.BeginScope("Parsing issues for project {projectName}...", projectValidation.ProjectName);
                 }
 
-                using (_logger.BeginScope("Parsing issues for project {projectName}...", projectName))
+                if (issuesFound)
                 {
-
-                    if (issuesFound && Regex.IsMatch(entry, ProcessValidationFailurePattern))
+                    if (processValidationSectionParser.IsIssue(entry))
                     {
-                        var issueLocationMatch = Regex.Match(entry, ProcessValidationFailurePattern);
-
-                        if (Regex.IsMatch(entry, CustomLinkPattern))
+                        var issueParsed = false;
+                        foreach (var subParser in _issueParsers)
                         {
-                            var customLinkIssueMatch = Regex.Match(entry, CustomLinkPattern);
-
-                            issues.Add(new CustomLinkIssue()
+                            if (subParser.TryParse(entry, out var issue))
                             {
-                                ProjectName = projectName,
-                                File = issueLocationMatch.Groups["file"].Value,
-                                LineNumber = int.Parse(string.IsNullOrWhiteSpace(issueLocationMatch.Groups["lineNumber"].Value) ? "-1" : issueLocationMatch.Groups["lineNumber"].Value),
-                                IssueRef = customLinkIssueMatch.Groups["issueRef"].Value,
-                                Description = customLinkIssueMatch.Groups["description"].Value,
-                                CustomLink = customLinkIssueMatch.Groups["customLink"].Value,
-                                Remediation = string.Empty
-                            });
-                            issuesParsed++;
+                                projectValidation?.Issues.Add(issue);
+                                issueParsed = true;
+                                break;
+                            }
                         }
-                        else if (Regex.IsMatch(entry, MissingAllowedValuesPattern))
-                        {
-                            var missingAllowedValuesIssueMatch = Regex.Match(entry, MissingAllowedValuesPattern);
 
-                            issues.Add(new MissingAllowedValuesIssue()
-                            {
-                                ProjectName = projectName,
-                                File = issueLocationMatch.Groups["file"].Value,
-                                LineNumber = int.Parse(string.IsNullOrWhiteSpace(issueLocationMatch.Groups["lineNumber"].Value) ? "-1" : issueLocationMatch.Groups["lineNumber"].Value),
-                                IssueRef = missingAllowedValuesIssueMatch.Groups["issueRef"].Value,
-                                Description = missingAllowedValuesIssueMatch.Groups["description"].Value,
-                                Remediation = string.Empty,
-                                RefName = missingAllowedValuesIssueMatch.Groups["refName"].Value,
-                                WitName = missingAllowedValuesIssueMatch.Groups["witName"].Value,
-                                ElementName = missingAllowedValuesIssueMatch.Groups["elementName"].Value
-                            });
-                            issuesParsed++;
-                        }
-                        else if (Regex.IsMatch(entry, MissingStateAndTransitionPattern))
-                        {
-                            var missingStateAndTransitionIssueMatch = Regex.Match(entry, MissingStateAndTransitionPattern);
-
-                            issues.Add(new MissingStateAndTransitionIssue()
-                            {
-                                ProjectName = projectName,
-                                File = issueLocationMatch.Groups["file"].Value,
-                                LineNumber = int.Parse(string.IsNullOrWhiteSpace(issueLocationMatch.Groups["lineNumber"].Value) ? "-1" : issueLocationMatch.Groups["lineNumber"].Value),
-                                IssueRef = missingStateAndTransitionIssueMatch.Groups["issueRef"].Value,
-                                Description = missingStateAndTransitionIssueMatch.Groups["description"].Value,
-                                Remediation = string.Empty,
-                                WitName = missingStateAndTransitionIssueMatch.Groups["witName"].Value,
-                                ElementName = missingStateAndTransitionIssueMatch.Groups["elementName"].Value,
-                                StateName = missingStateAndTransitionIssueMatch.Groups["stateName"].Value
-                            });
-
-                            issuesParsed++;
-                        }
-                        else
+                        if (!issueParsed)
                         {
                             _logger.LogWarning("Issue not parsed: '{entry}'", entry);
                         }
                     }
 
-                    if (Regex.IsMatch(entry, string.Format(EndOfIssuesPattern, projectName)))
+                    if (processValidationSectionParser.IsEndOfProjectIssues(entry, projectValidation.ProjectName))
                     {
-                        var match = Regex.Match(entry, string.Format(EndOfIssuesPattern, projectName));
+                        var numberOfIssues = processValidationSectionParser.ParseNumberOfIssues(entry, projectValidation.ProjectName);
 
-                        var numberOfIssues = int.Parse(match.Groups["numberOfIssues"].Value);
-
-                        if (numberOfIssues != issuesParsed)
+                        if (numberOfIssues != projectValidation.Issues.Count)
                         {
-                            _logger.LogWarning("{issuesNotMatched} issues that were not parsed.", numberOfIssues - issuesParsed);
+                            _logger.LogWarning("{issuesNotParsed} issues were not parsed.", numberOfIssues - projectValidation.Issues.Count);
                         }
 
                         issuesFound = false;
-                        projectName = string.Empty;
-                        issuesParsed = 0;
+                        loginScope?.Dispose();
                     }
                 }
             }

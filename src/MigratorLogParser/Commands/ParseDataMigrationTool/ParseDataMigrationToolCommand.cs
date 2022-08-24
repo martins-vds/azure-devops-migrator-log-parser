@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace MigratorLogParser.Commands.ParseDataMigrationTool
 {
-    [Verb("data-migration", HelpText = "Parse the DataMigrationTool log")]
+    [Verb("data-migration-tool", Hidden = false, HelpText = "Parse the DataMigrationTool log")]
     public class ParseDataMigrationLogCommand : IRequest
     {
         [Option(shortName: 'f', longName: "file-path", Required = true, HelpText = "Path to the DataMigrationTool.log file")]
@@ -33,17 +33,30 @@ namespace MigratorLogParser.Commands.ParseDataMigrationTool
 
         public Task<Unit> Handle(ParseDataMigrationLogCommand request, CancellationToken cancellationToken)
         {
-            var issues = _parser.ParseProcessValidationIssues(request.LogFilePath);
+            var dataMigrationToolLogParsed = _parser.Parse(request.LogFilePath);
 
-            var issuesByRef = issues.GroupBy(i => i.IssueRef);
-
-            foreach (var group in issuesByRef)
+            foreach (var projectValidationResult in dataMigrationToolLogParsed)
             {
-                var issueRef = group.Key;
+                var issuesByRef = projectValidationResult.Issues.GroupBy(i => i.IssueRef);
 
-                var issueType = group.First().GetType();
+                issuesByRef.AsParallel().ForAll(issues =>
+                {
+                    var issueRef = issues.Key;
 
-                _fileExporter.ExportToFile(group.Select(i => Convert.ChangeType(i, issueType)), $"{request.OutputDirectory}{Path.DirectorySeparatorChar}{issueRef}-{DateTime.Now.ToString("yyyyMMddHHmmss")}.csv");
+                    var issueType = issues.First().GetType();
+
+                    _fileExporter.ExportToFile(issues.Select(i => Convert.ChangeType(i, issueType)), $"{request.OutputDirectory}{Path.DirectorySeparatorChar}{projectValidationResult.ProjectName}-{issueRef}-{DateTime.Now.ToString("yyyyMMddHHmmss")}.csv");
+                });
+
+                //foreach (var issues in issuesByRef)
+                //{
+                //    var issueRef = issues.Key;
+
+                //    var issueType = issues.First().GetType();
+
+                //    _fileExporter.ExportToFile(issues.Select(i => Convert.ChangeType(i, issueType)), $"{request.OutputDirectory}{Path.DirectorySeparatorChar}{projectValidationResult.ProjectName}-{issueRef}-{DateTime.Now.ToString("yyyyMMddHHmmss")}.csv");
+                //}
+
             }
 
             return Unit.Task;
