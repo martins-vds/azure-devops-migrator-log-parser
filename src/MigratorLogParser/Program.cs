@@ -5,12 +5,9 @@
     using MediatR;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
-    using Microsoft.Extensions.Hosting;
     using Microsoft.Extensions.Logging;
-    using Microsoft.Extensions.Options;
-    using MigratorLogParser.Commands.ParseDataMigrationTool;
+    using MigratorLogParser.Commands;
     using MigratorLogParser.Exporters;
-    using MigratorLogParser.Parsers.DataMigrationTool;
     using System.IO.Abstractions;
     using System.Reflection;
 
@@ -32,11 +29,11 @@
             Mediator = ServiceProvider.GetRequiredService<IMediator>();
 
             var parser = new Parser(with => with.HelpWriter = null);
-            var parserResult = parser.ParseArguments<ParseDataMigrationLogCommand,object>(args);
+            var parserResult = parser.ParseArguments<ParseLogCommand>(args);
 
             parserResult
                 .WithNotParsed(errs => DisplayHelp(parserResult))
-                .WithParsedAsync<ParseDataMigrationLogCommand>(async c => await Mediator.Send(c));
+                .WithParsedAsync<ParseLogCommand>(async c => await Mediator.Send(c));
         }
 
         static void DisplayHelp<T>(ParserResult<T> result)
@@ -58,7 +55,7 @@
             services.AddMediatR(Assembly.GetExecutingAssembly());
             services.AddSingleton<IFileSystem, FileSystem>();
             services.AddSingleton<IFileExporter, CsvExporter>();
-            services.AddSingleton<DataMigrationToolLogParser>();
+            services.AddSingleton<LogParser>();
 
             return services.BuildServiceProvider();
         }

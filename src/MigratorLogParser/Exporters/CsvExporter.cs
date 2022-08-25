@@ -1,19 +1,17 @@
 ﻿using CsvHelper;
-using System;
-using System.Collections.Generic;
+using CsvHelper.Configuration;
 using System.Globalization;
-using System.Linq;
+using System.IO.Abstractions;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace MigratorLogParser.Exporters
 {
     public class CsvExporter : IFileExporter
     {
-        public void ExportToFile<T>(IEnumerable<T> records,string filePath)
+        public void ExportToFile<T>(IEnumerable<T> records, string filePath)
         {
             using var writer = new StreamWriter(filePath);
-            using var csv = new CsvWriter(writer, CultureInfo.InvariantCulture);
+            using var csv = new CsvWriter(writer, new CsvConfiguration(CultureInfo.InvariantCulture) { Encoding = Encoding.UTF8 });
 
             csv.WriteRecords(records);
         }

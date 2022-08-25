@@ -1,8 +1,7 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
-using Microsoft.VisualStudio.TestPlatform.Common.Exceptions;
-using MigratorLogParser.Issues;
-using MigratorLogParser.Parsers.DataMigrationTool;
+using MigratorLogParser.Models;
+using MigratorLogParser.Models.ProcessValidationIssues;
 using System.IO.Abstractions.TestingHelpers;
 using System.Text;
 
@@ -16,14 +15,14 @@ namespace MigratorLogParser.Tests
             // Arrange
             var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
             {
-                { @"c:\file.log", new MockFileData(BuildLogsWithCustomLinkIssues()) }
+                { @"c:\file.log", new MockFileData(BuildLogsTF402583Issues()) }
             });
 
-            var parser = new DataMigrationToolLogParser(fileSystem, new LoggerFactory().CreateLogger<DataMigrationToolLogParser>());
+            var parser = new LogParser(fileSystem, new LoggerFactory().CreateLogger<LogParser>());
 
-            var issues = parser.Parse(@"c:\file.log");
+            var migrationLog = parser.Parse(@"c:\file.log");
 
-            issues.Should().BeEquivalentTo(new List<ProcessValidation>()
+            migrationLog.ProcessValidationIssues.Should().BeEquivalentTo(new List<ProcessValidation>()
             {
                 new ProcessValidation()
                 {
@@ -44,14 +43,14 @@ namespace MigratorLogParser.Tests
             // Arrange
             var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
             {
-                { @"c:\file.log", new MockFileData(BuildLogsWithMissingAllowedValuesIssues()) }
+                { @"c:\file.log", new MockFileData(BuildLogsWithTF402544Issues()) }
             });
 
-            var parser = new DataMigrationToolLogParser(fileSystem, new LoggerFactory().CreateLogger<DataMigrationToolLogParser>());
+            var parser = new LogParser(fileSystem, new LoggerFactory().CreateLogger<LogParser>());
 
-            var issues = parser.Parse(@"c:\file.log");
+            var migrationLog = parser.Parse(@"c:\file.log");
 
-            issues.Should().BeEquivalentTo(new List<ProcessValidation>()
+            migrationLog.ProcessValidationIssues.Should().BeEquivalentTo(new List<ProcessValidation>()
             {
                 new ProcessValidation()
                 {
@@ -70,14 +69,14 @@ namespace MigratorLogParser.Tests
             // Arrange
             var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
             {
-                { @"c:\file.log", new MockFileData(BuildLogsWithMissingStateAndTransitionIssues()) }
+                { @"c:\file.log", new MockFileData(BuildLogsWithTF402551Issues()) }
             });
 
-            var parser = new DataMigrationToolLogParser(fileSystem, new LoggerFactory().CreateLogger<DataMigrationToolLogParser>());
+            var parser = new LogParser(fileSystem, new LoggerFactory().CreateLogger<LogParser>());
 
-            var issues = parser.Parse(@"c:\file.log");
+            var migrationLog = parser.Parse(@"c:\file.log");
 
-            issues.Should().BeEquivalentTo(new List<ProcessValidation>()
+            migrationLog.ProcessValidationIssues.Should().BeEquivalentTo(new List<ProcessValidation>()
             {
                 new ProcessValidation()
                 {
@@ -92,7 +91,7 @@ namespace MigratorLogParser.Tests
             });
         }
 
-        private string BuildLogsWithCustomLinkIssues()
+        private string BuildLogsTF402583Issues()
         {
             var builder = new StringBuilder();
 
@@ -106,7 +105,7 @@ namespace MigratorLogParser.Tests
             return builder.ToString();
         }
 
-        private string BuildLogsWithMissingAllowedValuesIssues()
+        private string BuildLogsWithTF402544Issues()
         {
             var builder = new StringBuilder();
 
@@ -118,7 +117,7 @@ namespace MigratorLogParser.Tests
             return builder.ToString();
         }
 
-        private string BuildLogsWithMissingStateAndTransitionIssues()
+        private string BuildLogsWithTF402551Issues()
         {
             var builder = new StringBuilder();
 
