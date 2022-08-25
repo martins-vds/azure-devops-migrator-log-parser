@@ -4,9 +4,9 @@ namespace MigratorLogParser.Parsers.DataMigrationTool
 {
     public class ProcessValidationSectionParser : ParserBase<ProcessValidation>
     {
-        private const string EndOfIssuesPattern = @"\[Info\] Step : ProcessValidation INFO - Validation failed for project {0} with (?<numberOfIssues>\d+) errors";
+        private const string EndOfIssuesPattern = @"\[Info[^\]]+\] Step : ProcessValidation INFO - Validation failed for project {0} with (?<numberOfIssues>\d+) errors";
 
-        public ProcessValidationSectionParser() : base(@"\[Info\] Step : ProcessValidation INFO - Starting validation of project \d+=(?<projectName>[^,]+),")
+        public ProcessValidationSectionParser() : base(@"\[Info[^\]]+\] Step : ProcessValidation INFO - Starting validation of project \d+=(?<projectName>[^,]+),")
         {
         }
 
@@ -30,7 +30,7 @@ namespace MigratorLogParser.Parsers.DataMigrationTool
 
         public bool IsIssue(string text)
         {
-            return IsMatch(text, @"\[Error\] Step : ProcessValidation - Failure Type - Validation failed : Invalid process template: (?<file>[^:]*):(?<lineNumber>\d*)");
+            return IsMatch(text, @"\[Error[^\]]+\] Step : ProcessValidation - Failure Type - Validation failed : Invalid process template: (?<file>[^:]*):(?<lineNumber>\d*)");
         }
 
         public bool IsEndOfProjectIssues(string text, string project)
