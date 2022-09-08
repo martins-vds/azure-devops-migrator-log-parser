@@ -6,6 +6,11 @@ namespace MigratorLogParser.Models
     {
         public string? ListName { get; set; }
 
+        public GlobalList()
+        {
+            Remediation = "https://docs.microsoft.com/en-us/azure/devops/reference/witadmin/manage-global-lists-for-work-item-types?view=azure-devops";
+        }
+
         public override bool Equals(object? obj)
         {
             return Equals(obj as GlobalList);
