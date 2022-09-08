@@ -41,7 +41,7 @@
             var helpText = HelpText.AutoBuild(result, h =>
             {
                 h.AdditionalNewLineAfterOption = false;
-                h.Heading = "Azure DevOps Services Migrator Log Parser 1.0.0";
+                h.Heading = "Azure DevOps Services Migrator Log Parser 1.2.0";
                 h.Copyright = "Copyright (c) 2022 Vinny Martins";
                 return HelpText.DefaultParsingErrorsHandler(result, h);
             }, e => e);
