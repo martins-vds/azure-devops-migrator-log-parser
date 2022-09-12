@@ -43,7 +43,8 @@ namespace MigratorLogParser
             new TF402581Parser(),
             new TF402584Parser(),
             new TF402594Parser(),
-            new TF402596Parser()
+            new TF402596Parser(),
+            new TF402547Parser()
         };
 
         public LogParser(IFileSystem fileSystem, ILogger<LogParser> logger)

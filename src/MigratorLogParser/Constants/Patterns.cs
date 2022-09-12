@@ -12,7 +12,6 @@ namespace MigratorLogParser.Constants
         public const string InvalidIdentity = @"(?<description>User(?:.*?)Identifier: (?<sid>S(-\d+){7}); DisplayName: (?<displayName>[^)]+)(?:.*?)property \[(?<property>[^]]+)\] contained invalid characters)";
         public const string GlobalList = @"(?<description>Global List : (?<globalList>.*?(?=\s*will)) will be excluded from import.)";
         public const string ProcessValidation = @"\[Info[^\]]*?\] Step : ProcessValidation INFO - Starting validation of project \d+=(?<projectName>[^,]+),";
-
         public const string ProcessValidationIssue = @"\[Error[^\]]*?\] Step : ProcessValidation - Failure Type - Validation failed : Invalid process template: (?<file>[^:]*):(?<lineNumber>\d*):";
     }
 }
