@@ -5,7 +5,7 @@ namespace MigratorLogParser.Parsers.ProcessValidation
     public class TF402544Parser : ProcessValidationIssueParser
     {
         public TF402544Parser()
-            : base(@"(?<issueRef>TF\d+): Field (?<refName>.*(?=,\s+defined)), defined in work item type (?<witName>[^,]*), requires an ALLOWEDVALUES rule that contains values to support element (?<elementName>\S*) specified in ProcessConfiguration\.")
+            : base(@"(?<issueRef>TF\d+): Field (?<refName>.*?(?=,\s*defined)), defined in work item type (?<witName>[^,]*), requires an ALLOWEDVALUES rule that contains values to support element (?<elementName>\S*) specified in ProcessConfiguration\.")
         {
         }
 

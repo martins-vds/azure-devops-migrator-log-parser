@@ -73,7 +73,6 @@ namespace MigratorLogParser
                         if (currentProjectValidation is null)
                         {
                             _processValidationParser.TryParse(entry, out currentProjectValidation);
-                            migrationLog.ProcessValidationIssues.Add(currentProjectValidation);
                         }
 
                         if (_processValidationParser.IsIssue(entry))
@@ -95,11 +94,16 @@ namespace MigratorLogParser
                             }
                         }
 
-                        if (_processValidationParser.IsEndOfProjectIssues(entry))
+                        if (_processValidationParser.IsEndOfProcessValidation(entry))
                         {
+                            if (currentProjectValidation is not null && currentProjectValidation.Issues.Any())
+                            {
+                                migrationLog.ProcessValidationIssues.Add(currentProjectValidation);
+                            }
+
                             var numberOfIssues = _processValidationParser.ParseNumberOfIssues(entry);
 
-                            if (numberOfIssues != currentProjectValidation!.Issues.Count)
+                            if (numberOfIssues is not null && numberOfIssues != currentProjectValidation!.Issues.Count)
                             {
                                 _logger.LogWarning("    {issuesNotParsed} issues were not parsed for project '{project}'.", numberOfIssues - currentProjectValidation.Issues.Count, currentProjectValidation.ProjectName);
                             }
@@ -127,7 +131,7 @@ namespace MigratorLogParser
                         {
                             migrationLog.GlobalLists.Add(globalList);
                         }
-                        break;
+                        break;                    
 
                 }
             }

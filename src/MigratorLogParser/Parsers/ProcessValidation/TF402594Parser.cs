@@ -5,7 +5,7 @@ namespace MigratorLogParser.Parsers.ProcessValidation
     public class TF402594Parser : ProcessValidationIssueParser
     {
         public TF402594Parser()
-            : base(@"(?<issueRef>TF\d+): File violates the schema with the following error: The element '(?<elementName>[^']+)' has incomplete content. List of possible elements expected: (?<expectedElements>[^\.]+)\.")
+            : base(@"(?<issueRef>TF\d+): File violates the schema with the following error: The element '(?<elementName>[^']+)' has incomplete content. List of possible elements expected: (?<expectedElements>[^\.]*)\.")
         {
         }
 

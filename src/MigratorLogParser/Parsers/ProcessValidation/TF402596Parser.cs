@@ -5,7 +5,7 @@ namespace MigratorLogParser.Parsers.ProcessValidation
     public class TF402596Parser : ProcessValidationIssueParser
     {
         public TF402596Parser()
-            : base(@"(?<issueRef>TF\d+): Category (?<category>[^\b]+) doesn't define work Item type (?<wit>[^\.$]+)\.")
+            : base(@"(?<issueRef>TF\d+): Category (?<category>[^\b]+) doesn't define work Item type (?<wit>[^\.$]*)\.")
         {
         }
 

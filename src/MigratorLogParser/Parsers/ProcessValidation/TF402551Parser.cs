@@ -5,7 +5,7 @@ namespace MigratorLogParser.Parsers.ProcessValidation
     public class TF402551Parser : ProcessValidationIssueParser
     {
         public TF402551Parser()
-            : base(@"(?<issueRef>TF\d+): Work item type (?<witName>.*(?=\s*doesn't)) doesn't define workflow state (?<stateName>[^,]+), which is required because ProcessConfiguration maps it to a metastate for element (?<elementName>.*(?=\.$))\.")
+            : base(@"(?<issueRef>TF\d+): Work item type (?<witName>.*?(?=\s*doesn't)) doesn't define workflow state (?<stateName>[^,]+), which is required because ProcessConfiguration maps it to a metastate for element (?<elementName>.*?(?=\.$))\.")
         {
         }
 

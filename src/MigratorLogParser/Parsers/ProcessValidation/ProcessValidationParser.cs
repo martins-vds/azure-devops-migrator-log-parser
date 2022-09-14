@@ -4,7 +4,9 @@ namespace MigratorLogParser.Parsers.ProcessValidation
 {
     public class ProcessValidationParser : ParserBase<Models.ProcessValidation>
     {
-        private const string EndOfIssuesPattern = @"\[Info[^\]]+\] Step : ProcessValidation INFO - Validation failed for project (?<projectName>.*?(?=\s*with)) with (?<numberOfIssues>\d+) errors";
+        private const string StartOfProcessValidation = @$"{Patterns.ProcessValidation} - Starting validation of project \d+=(?<projectName>[^,]+),";
+        private const string EndOfIssuesPattern = @$"{Patterns.ProcessValidation} - Validation failed for project (?<projectName>.*?(?=\s*with)) with (?<numberOfIssues>\d+) errors";
+        private const string SuccessfullValidationPattern = @$"{Patterns.ProcessValidation} - Successfully validated project (?<projectName>.*)";
 
         public ProcessValidationParser() : base(Patterns.ProcessValidation)
         {
@@ -12,13 +14,13 @@ namespace MigratorLogParser.Parsers.ProcessValidation
 
         public override bool TryParse(string text, out Models.ProcessValidation issue)
         {
-            if (!IsMatch(text))
+            if (!IsMatch(text, StartOfProcessValidation))
             {
                 issue = default;
                 return false;
             }
 
-            var match = Match(text);
+            var match = Match(text, StartOfProcessValidation);
 
             issue = new Models.ProcessValidation()
             {
@@ -30,7 +32,7 @@ namespace MigratorLogParser.Parsers.ProcessValidation
 
         public override bool ShouldParse(string text)
         {
-            if(IsMatch(text, Patterns.ProcessValidation) || IsIssue(text) || IsEndOfProjectIssues(text)) { return true; }
+            if(IsMatch(text, Patterns.ProcessValidation) || IsIssue(text) || IsEndOfProcessValidation(text)) { return true; }
 
             return false;
         }
@@ -40,19 +42,19 @@ namespace MigratorLogParser.Parsers.ProcessValidation
             return IsMatch(text, Patterns.ProcessValidationIssue);
         }
 
-        public bool IsEndOfProjectIssues(string text)
+        public bool IsEndOfProcessValidation(string text)
         {
-            return IsMatch(text, EndOfIssuesPattern);
+            return IsMatch(text, EndOfIssuesPattern) || IsMatch(text, SuccessfullValidationPattern);
         }
 
-        public int ParseNumberOfIssues(string text)
+        public int? ParseNumberOfIssues(string text)
         {
             var match = Match(text, EndOfIssuesPattern);
             var value = match.Groups["numberOfIssues"].Value;
 
             if (string.IsNullOrWhiteSpace(value))
             {
-                return -1;
+                return null;
             }
 
             return int.Parse(value);

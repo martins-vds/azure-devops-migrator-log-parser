@@ -10,7 +10,7 @@ namespace MigratorLogParser.Parsers.ProcessValidation
     public class TF402547Parser : ProcessValidationIssueParser
     {
         public TF402547Parser()
-            : base(@"(?<issueRef>TF\d+): Element (?<elementName>[\S]+) requires that for work item type (?<wit>[\S]+) you map at least one state to metastate (?<metastate>[^.]+).")
+            : base(@"(?<issueRef>TF\d+): Element (?<elementName>[\S]+) requires that for work item type (?<wit>[\S]+) you map at least one state to metastate (?<metastate>[^.]*).")
         {
         }
 

@@ -5,7 +5,7 @@ namespace MigratorLogParser.Parsers.ProcessValidation
     public class TF402580Parser : ProcessValidationIssueParser
     {
         public TF402580Parser()
-            : base(@"(?<issueRef>TF\d+): You can only use the name (?<witName>.*(?=\s*for)) for a single work item type\.")
+            : base(@"(?<issueRef>TF\d+): You can only use the name (?<witName>.*?(?=\s*for)) for a single work item type\.")
         {
         }
 

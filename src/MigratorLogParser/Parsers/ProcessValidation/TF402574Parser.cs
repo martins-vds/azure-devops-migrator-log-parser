@@ -5,7 +5,7 @@ namespace MigratorLogParser.Parsers.ProcessValidation
     public class TF402574Parser : ProcessValidationIssueParser
     {
         public TF402574Parser()
-            : base(@"(?<issueRef>TF\d+): ProcessConfiguration doesn't specify required TypeField (?<typeField>[^\.]+)\.")
+            : base(@"(?<issueRef>TF\d+): ProcessConfiguration doesn't specify required TypeField (?<typeField>[^\.]*)\.")
         {
         }
 

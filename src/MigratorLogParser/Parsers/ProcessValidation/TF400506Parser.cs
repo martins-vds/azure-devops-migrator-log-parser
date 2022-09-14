@@ -5,7 +5,7 @@ namespace MigratorLogParser.Parsers.ProcessValidation
     public class TF400506Parser : ProcessValidationIssueParser
     {
         public TF400506Parser()
-            : base(@"The following element contains an error: (?<elementName>.*(?=\.\s*TF)). (?<issueRef>TF\d+): This element defines the states for work items that represent Bugs or Defects. Each state must exist in at least one of the work item types that are defined in: (?<elementCategory>[^\.]+). The following states do not exist in any of the work item types: (?<missingStates>[^\.$]+)\.")
+            : base(@"The following element contains an error: (?<elementName>.*(?=\.\s*TF)). (?<issueRef>TF\d+): This element defines the states for work items that represent Bugs or Defects. Each state must exist in at least one of the work item types that are defined in: (?<elementCategory>[^\.]+). The following states do not exist in any of the work item types: (?<missingStates>[^\.$]*)\.")
         {
         }
 
